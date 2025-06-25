@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autoevaluación de Dominancia Cerebral</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .section-card {
+            background-color: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn-primary {
+            background-color: #4f46e5;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #4338ca;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background-color: #6b7280;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563;
+        }
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e5e7eb;
+            border-radius: 9999px;
+            height: 0.75rem;
+            margin-bottom: 2rem;
+        }
+        .progress-bar {
+            background-color: #4f46e5;
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.5s ease-in-out;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .checkbox-label:hover {
+            background-color: #f3f4f6;
+        }
+         .checkbox-label input:checked ~ span {
+            font-weight: 600;
+            color: #4f46e5;
+        }
+        .checkbox-label input:checked {
+            accent-color: #4f46e5;
+        }
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(1, 1fr);
+            gap: 1.5rem;
+        }
+        @media (min-width: 768px) {
+            .results-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        .result-card {
+            border: 2px solid;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        .modo1-border { border-color: #3b82f6; }
+        .modo2-border { border-color: #10b981; }
+        .modo3-border { border-color: #f97316; }
+        .modo4-border { border-color: #ef4444; }
+        #interpretation-section {
+            margin-top: 2.5rem;
+            padding: 1.5rem;
+            background-color: #f3f4f6;
+            border-radius: 0.75rem;
+            border-left: 5px solid #4f46e5;
+        }
+        /* Estilos para el gráfico */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            aspect-ratio: 1 / 1;
+            margin: 1rem auto;
+            background-image: url('https://i.postimg.cc/1ncVWvjm/4-Quadrant-Brain-Map-Base.png');
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        #brainChart {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-5xl">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900">Autoevaluación de Dominancia Cerebral</h1>
+            <p class="mt-2 text-lg text-gray-600">Basado en el modelo de Benziger</p>
+        </header>
+
+        <!-- Contenedor del Quiz -->
+        <div id="quiz-container" class="quiz-container">
+
+            <!-- Intro -->
+            <div id="section-intro" class="section-card">
+                <h2 class="text-2xl font-bold mb-4 text-center">Instrucciones</h2>
+                <p class="mb-4">Esta evaluación está dividida en cuatro secciones. En cada una, encontrarás una descripción y 15 frases.</p>
+                <p class="mb-4"><strong>Importante:</strong> No intentes lograr un puntaje alto en todo. Identifica lo que te <strong>gusta hacer</strong> y te resulta natural, no solo lo que puedes hacer.</p>
+                <p class="mb-6 font-semibold text-center">¡Sé honesto/a contigo mismo/a para obtener el resultado más preciso!</p>
+                <div class="text-center">
+                    <button id="start-btn" class="btn btn-primary">Comenzar Evaluación</button>
+                </div>
+            </div>
+
+            <!-- Secciones del Quiz (1-4) -->
+            <div id="section-1" class="section-card" style="display: none;"></div>
+            <div id="section-2" class="section-card" style="display: none;"></div>
+            <div id="section-3" class="section-card" style="display: none;"></div>
+            <div id="section-4" class="section-card" style="display: none;"></div>
+
+            <!-- Contenedor de Resultados (incluye el gráfico) -->
+            <div id="section-results" style="display: none;"></div>
+
+            <!-- Barra de Progreso -->
+            <div id="progress-bar-container" style="display: none;">
+                <div id="progress-bar" class="progress-bar" style="width: 0%;"></div>
+            </div>
+
+            <!-- Navegación -->
+            <div id="navigation" class="flex justify-between mt-8" style="display: none;">
+                <button id="prev-btn" class="btn btn-secondary">Anterior</button>
+                <button id="next-btn" class="btn btn-primary">Siguiente</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // --- DATOS DEL QUIZ ---
+            const quizData = [
+                 { modo: 'Modo I', title: 'Ordenado y Basado en Procedimientos', summary: 'Te sientes más cómodo/a con la estructura, los procedimientos y la organización. Valoras la fiabilidad y la atención al detalle.' },
+                 { modo: 'Modo II', title: 'Espiritual y Basado en Sentimientos', summary: 'Tu fortaleza radica en la empatía, la comunicación y la conexión con los demás. Te guías por los sentimientos y valoras la armonía interpersonal.' },
+                 { modo: 'Modo III', title: 'Visual, Espacial y No Verbal', summary: 'Eres una persona innovadora, imaginativa y conceptual. Disfrutas viendo el "cuadro general" y conectando ideas diversas de formas novedosas.' },
+                 { modo: 'Modo IV', title: 'Lógico y Matemático', summary: 'Tu pensamiento es analítico, estratégico y orientado a resultados. Te destacas en la resolución de problemas, la lógica y la eficiencia.' }
+            ];
+            const questionsData = [
+                ['Me destaco en mantener las cosas organizadas.', 'Me gusta trabajar en los detalles.', 'Soy muy productivo, confiable y autodisciplinado.', 'Disfruto de tareas tales como clasificar, archivar, planificar y confeccionar rótulos.', 'Creo que las reglas son importantes y deben cumplirse.', 'Para trabajar prefiero guiarme por instrucciones y procedimientos específicos.', 'Me considero conservador y tradicional.', 'Tanto en el trabajo como en casa me gusta tener un lugar específico para cada cosa.', 'Utilizo un método paso a paso para resolver los problemas y abordar las tareas.', 'Me disgustan enérgicamente la ambigüedad y la falta de previsión.', 'Completo mis tareas de manera puntual y ordenada.', 'Prefiero relacionarme con personas que controlen sus emociones y se comporten adecuadamente (y las apruebo).', 'Siempre leo las instrucciones completamente antes de comenzar un proyecto.', 'Disfruto de tener rutinas regulares y seguirlas.', 'Prefiero programar mi vida personal y profesional y me molesta cuando tengo que desviarme de ese programa.'],
+                ['Presto especial atención al lenguaje corporal y a la comunicación no verbal y tengo la capacidad de comprenderlo.', 'Creo que los sentimientos son más verdaderos y más importantes que los pensamientos.', 'Disfruto de "conectarme" verbalmente con los demás, de escuchar sus problemas y compartir sus sentimientos.', 'Me considero una persona sumamente espiritual.', 'Me relaciono con los demás con empatía y me resulta "fácil sentir lo que ellos sienten".', 'Me destaco en generar entusiasmo y en motivar positivamente a los demás.', 'Con frecuencia toco a las personas espontáneamente de manera alentadora.', 'Automáticamente observo el rostro de la persona con la que hablo.', 'Me encanta cantar, bailar y escuchar música.', 'Creo que el desarrollo y el crecimiento personal son sumamente importantes.', 'Defino el éxito según la calidad de la experiencia.', 'Considero que mis relaciones son la parte más importante de mi vida.', 'Me siento incómodo ante situaciones de conflicto.', 'Considero que la cooperación y la armonía son los valores humanos más importantes.', 'Siempre deseo saber cómo se siente la gente y cómo se relaciona.'],
+                ['Me concentro más en el "cuadro general" que en los detalles "quisquillosos".', 'Habitualmente se me ocurren ideas innovadoras y soluciones creativas.', 'Se me reconoce como una persona muy expresiva y con mucha energía.', 'Claramente me disgustan las tareas o actividades rutinarias y me aburro enseguida de ellas.', 'Me destaco en sintetizar ideas o temas distintos en "un todo" nuevo.', 'Prefiero trabajar en forma simultánea, procesando muchas ideas y tareas al mismo tiempo.', 'Considero que la novedad, la originalidad y la evolución son los valores más importantes.', 'Encuentro fácilmente la información en las pilas que armo para organizar mi casa/oficina.', 'Utilizo metáforas y analogías visuales para explicar mi pensamiento a los demás.', 'Me entusiasmo con las ideas novedosas o "extrañas" de los demás.', 'A la hora de resolver problemas, confío en los presentimientos y en mi intuición.', 'Tengo un sentido del humor que me ha llevado a tener problemas por no comportarme adecuadamente.', 'Algunas de mis mejores ideas surgen mientras "no estoy haciendo nada en particular".', 'He desarrollado muy bien mis habilidades espaciales y puedo "ver" cómo reorganizar una habitación.', 'Tengo talento artístico.'],
+                ['Prefiero trabajar en temas técnicos o financieros.', 'Me gusta el pensamiento crítico y analítico.', 'Tengo buenas habilidades para resolver problemas técnicos y de diagnóstico.', 'Me destaco en el estudio de las ciencias, finanzas, matemáticas y lógica.', 'Disfruto y recargo las energías en debates y disputas verbales.', 'Me destaco en entender el funcionamiento de las máquinas y disfruto al usar herramientas.', 'Prefiero tener la responsabilidad final a la hora de tomar decisiones y determinar prioridades.', 'Considero que pensar es significativamente más importante que sentir.', 'Me destaco en realizar inversiones y en administrar el tiempo y el dinero.', 'Me considero básicamente un pensador lógico.', 'Me destaco en delegar y dar órdenes.', 'Suelo organizar el material en puntos clave y en principios operativos.', 'Evalúo mi éxito en función de los resultados reales que produzco.', 'Me considero un líder poderoso, decidido y efectivo.', 'Valoro la efectividad y la racionalidad por encima de todo lo demás.']
+            ];
+
+
+            // --- ESTADO DEL QUIZ ---
+            let currentSection = -1;
+            const totalSections = quizData.length;
+            let scores = new Array(totalSections).fill(0).map(() => ({ partA: 0, partB: 0, total: 0 }));
+            let brainChartInstance = null;
+
+            // --- ELEMENTOS DEL DOM ---
+            const introSection = document.getElementById('section-intro');
+            const startBtn = document.getElementById('start-btn');
+            const navigation = document.getElementById('navigation');
+            const nextBtn = document.getElementById('next-btn');
+            const prevBtn = document.getElementById('prev-btn');
+            const progressBarContainer = document.getElementById('progress-bar-container');
+            const progressBar = document.getElementById('progress-bar');
+            const resultsSection = document.getElementById('section-results');
+
+
+            // --- LÓGICA DEL QUIZ ---
+            
+            function buildSection(index) {
+                const sectionData = quizData[index];
+                const sectionEl = document.getElementById(`section-${index + 1}`);
+                const titles = ['Posterior Izquierda', 'Posterior Derecha', 'Frontal Derecho', 'Frontal Izquierdo'];
+                let questionsHtml = questionsData[index].map((q, qIndex) => `
+                    <label class="checkbox-label" for="q-${index}-${qIndex}">
+                        <input type="checkbox" id="q-${index}-${qIndex}" class="mr-3 h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" data-section="${index}">
+                        <span>${q}</span>
+                    </label>
+                `).join('');
+
+                sectionEl.innerHTML = `
+                        <h2 class="text-2xl font-bold mb-1">${sectionData.modo}: ${sectionData.title}</h2>
+                        <p class="text-gray-600 italic mb-6">${titles[index]}</p>
+                        <div class="mb-8 p-4 bg-indigo-50 rounded-lg">
+                            <label for="partA-${index}" class="block text-md font-medium text-gray-700 mb-2">En una escala de 0 a 5, ¿cuán cómodo se siente con la descripción de este modo?</label>
+                            <div class="flex items-center">
+                                <span class="mr-2">0</span>
+                                <input type="range" id="partA-${index}" min="0" max="5" value="${scores[index].partA}" step="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" data-section="${index}">
+                                <span class="ml-2 font-bold" id="range-value-${index}">${scores[index].partA}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold mb-4">Marque todas las frases que sean muy descriptivas de su persona:</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${questionsHtml}</div>
+                        </div>
+                `;
+            }
+
+            function updateScores() {
+                scores.forEach((score, index) => {
+                    const rangeInput = document.getElementById(`partA-${index}`);
+                    if (rangeInput) scores[index].partA = parseInt(rangeInput.value, 10);
+                    const checkboxes = document.querySelectorAll(`#section-${index + 1} input[type="checkbox"]:checked`);
+                    scores[index].partB = checkboxes.length;
+                    scores[index].total = (scores[index].partA + scores[index].partB) * 6;
+                });
+            }
+
+            function showSection(sectionIndex) {
+                // Ocultar todos los contenedores principales
+                introSection.style.display = 'none';
+                resultsSection.style.display = 'none';
+                for (let i = 1; i <= totalSections; i++) {
+                    const el = document.getElementById(`section-${i}`);
+                    if (el) el.style.display = 'none';
+                }
+                
+                navigation.style.display = 'none';
+                progressBarContainer.style.display = 'none';
+
+                // Mostrar la sección correcta
+                if (sectionIndex === -1) {
+                    introSection.style.display = 'block';
+                } else if (sectionIndex >= 0 && sectionIndex < totalSections) {
+                    const currentSectionEl = document.getElementById(`section-${sectionIndex + 1}`);
+                    if (currentSectionEl) currentSectionEl.style.display = 'block';
+                    
+                    navigation.style.display = 'flex';
+                    progressBarContainer.style.display = 'block';
+                    
+                    updateNavigation();
+                    updateProgressBar();
+                } else if (sectionIndex === totalSections) {
+                    showResults();
+                }
+            }
+
+            function updateNavigation() {
+                prevBtn.disabled = currentSection === 0;
+                prevBtn.classList.toggle('opacity-50', currentSection === 0);
+                nextBtn.textContent = currentSection === totalSections - 1 ? 'Ver Resultados' : 'Siguiente';
+            }
+            
+            function updateProgressBar() {
+                const progress = ((currentSection + 1) / totalSections) * 100;
+                progressBar.style.width = `${progress}%`;
+            }
+
+            function getInterpretation(score) {
+                const scaledScore = score / 6; 
+                if (scaledScore >= 20) return { title: 'Compromiso Fuerte', color: 'text-red-600' };
+                if (scaledScore >= 13) return { title: 'Preferencia / Competencia Alta', color: 'text-orange-500' };
+                if (scaledScore >= 6) return { title: 'Competencia Moderada', color: 'text-yellow-500' };
+                return { title: 'Falta de Preferencia / Evasión', color: 'text-green-600' };
+            }
+            
+            function generateInterpretationText() {
+                const indexedScores = scores.map((score, index) => ({ index, total: score.total }));
+                indexedScores.sort((a, b) => b.total - a.total);
+                const [dominant, auxiliary, , least] = indexedScores.map(s => quizData[s.index]);
+                return `
+                    <p class="mb-4">Tu preferencia dominante parece ser el <strong>${dominant.modo} (${dominant.title})</strong>. ${dominant.summary}</p>
+                    <p class="mb-4">Frecuentemente, apoyas esta preferencia con las habilidades de tu modo auxiliar, el <strong>${auxiliary.modo} (${auxiliary.title})</strong>. ${auxiliary.summary}</p>
+                    <p class="mb-4">Por otro lado, el <strong>${least.modo}</strong> es el área que podrías encontrar menos natural. Las tareas que requieren un enfoque <strong>${least.title.toLowerCase()}</strong> pueden demandarte más energía.</p>
+                    <p class="text-sm text-gray-600 mt-6"><em>Recuerda que esta es una autoevaluación. Conocer tus preferencias puede ayudarte a entender mejor tus fortalezas y áreas de desarrollo.</em></p>
+                `;
+            }
+
+            function showResults() {
+                updateScores();
+                const cardColors = ['modo1-border', 'modo2-border', 'modo3-border', 'modo4-border'];
+                const titles = ['Posterior Izquierdo (I)', 'Posterior Derecha (II)', 'Frontal Derecho (III)', 'Frontal Izquierdo (IV)'];
+                const displayOrder = [3, 2, 0, 1]; 
+
+                let resultsGridHtml = displayOrder.map(index => {
+                    const score = scores[index];
+                    const interpretation = getInterpretation(score.total);
+                    const displayScore = Math.round(score.total / 6); 
+                    return `
+                        <div class="result-card ${cardColors[index]}">
+                            <h3 class="text-xl font-bold">${quizData[index].modo}</h3>
+                            <p class="text-sm text-gray-500 mb-2">${titles[index]}</p>
+                            <p class="text-6xl font-extrabold my-4">${displayScore}</p>
+                            <p class="text-lg font-semibold ${interpretation.color}">${interpretation.title}</p>
+                        </div>
+                    `;
+                }).join('');
+                
+                resultsSection.innerHTML = `
+                    <div class="section-card">
+                        <h2 class="text-3xl font-bold text-center mb-2">Tus Resultados</h2>
+                        <p class="text-center text-gray-600 mb-8">Puntuación final del test (escala 0-20).</p>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                            <div>
+                                <div class="results-grid mb-8">
+                                    ${resultsGridHtml}
+                                </div>
+                                <div id="interpretation-section">
+                                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Interpretación</h3>
+                                    ${generateInterpretationText()}
+                                </div>
+                            </div>
+                            <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-inner">
+                                <h3 class="text-2xl font-bold text-center text-gray-800 mb-4">Mapa Cerebral Visual</h3>
+                                <div class="chart-container">
+                                    <canvas id="brainChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-12">
+                           <button id="restart-btn" class="btn btn-secondary">Realizar de Nuevo</button>
+                        </div>
+                    </div>
+                `;
+                resultsSection.style.display = 'block';
+                
+                initChart();
+
+                document.getElementById('restart-btn').addEventListener('click', () => {
+                    currentSection = -1;
+                    scores = new Array(totalSections).fill(0).map(() => ({ partA: 0, partB: 0, total: 0 }));
+                    if (brainChartInstance) { brainChartInstance.destroy(); brainChartInstance = null; }
+                    showSection(currentSection);
+                });
+            }
+
+            function initChart() {
+                if (brainChartInstance) brainChartInstance.destroy();
+                const ctx = document.getElementById('brainChart')?.getContext('2d');
+                if (!ctx) return;
+                const chartData = [scores[3].total, scores[2].total, scores[1].total, scores[0].total];
+                brainChartInstance = new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: ["Frontal Izquierdo (IV)", "Frontal Derecho (III)", "Posterior Derecha (II)", "Posterior Izquierda (I)"],
+                        datasets: [{
+                            label: 'Puntuación',
+                            data: chartData,
+                            backgroundColor: 'rgba(79, 70, 229, 0.2)',
+                            borderColor: 'rgba(79, 70, 229, 1)',
+                            borderWidth: 3,
+                            pointBackgroundColor: 'rgba(79, 70, 229, 1)',
+                            pointBorderColor: '#fff',
+                            pointRadius: 6,
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        scales: { r: { startAngle: -45, suggestedMin: 0, suggestedMax: 120, grid: { color: 'rgba(0,0,0,0.05)' }, angleLines: { display: false }, pointLabels: { display: false }, ticks: { display: false } } },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+            
+            // --- MANEJADORES DE EVENTOS ---
+            startBtn.addEventListener('click', () => {
+                currentSection = 0;
+                quizData.forEach((_, index) => buildSection(index));
+                showSection(currentSection);
+            });
+
+            nextBtn.addEventListener('click', () => {
+                if (currentSection < totalSections) { updateScores(); currentSection++; window.scrollTo(0,0); showSection(currentSection); }
+            });
+
+            prevBtn.addEventListener('click', () => {
+                if (currentSection > 0) { updateScores(); currentSection--; window.scrollTo(0,0); showSection(currentSection); }
+            });
+
+            document.getElementById('quiz-container').addEventListener('input', function(e) {
+                if (e.target && e.target.type === 'range') {
+                    const section = e.target.dataset.section;
+                    if (section !== undefined) {
+                        const valueDisplay = document.getElementById(`range-value-${section}`);
+                        if (valueDisplay) {
+                           valueDisplay.textContent = e.target.value;
+                        }
+                    }
+                }
+            });
+
+            // --- INICIALIZACIÓN ---
+            showSection(currentSection);
+        });
+    </script>
+</body>
+</html>
+
